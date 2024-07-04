@@ -1,0 +1,318 @@
+---
+title: "Report: New Alexa´s Algorithm"
+author: "Amparo M. Trucco"
+date: "2024-05-22"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    toc_title: "Contents"
+    toc_smooth_scroll: true
+    toc_collapse: false
+    toc_backlinks: true
+bibliography: "C:/Users/ampar/OneDrive/Documents/Amazon/QM_Exam.bib"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+In order to assess the impact of the new Alexa algorithm on Amazon's revenue, a randomized control trial (RCT) stands out as an ideal method. Given the practical challenges fot its implementation, specifically the high costs and time required,  an alternative approach is required. The Difference-in-Differences (DiD) experimental design is the most apropiate way of estimating the desired effect. 
+
+In our DiD setup, the Treatment Group comprises four states —Florida, Nebraska, Texas, and California— where the new algorithm will be deployed. These states represent our experimental group, from were we can observe the effects of the algorithm. In contrast, the Control Group consists of the remaining USA states, continuing with the old algorithm. This group serves as our baseline for comparison. We assume that the selected states (Florida, Nebraska, Texas, and California) are a representative sample of the entire other USA states.
+We will also check balance and statistical similarity between the Treatment and Control Groups, specifically the parallel trends assumption.  
+
+
+### DiD Experimental Desing
+
+The Differences in Differences (DID) estimator utilizes data observed at different points in time when conducting statistical analyses, particularly when a randomized experiment is not feasible. Typically, data is collected in two periods, denoted as 0 (pre-treatment) and 1 (post-treatment), with the treatment or policy change occurring between these periods (t ∈ (0,1)).
+
+Difference-in-differences compares the effect of the new algorithm in sales, observed in the treated group (the four cities) after treatment against our the  estimate of what the treated group’s outcomes would have been without the treatment. We are specifically isolating the difference between having the new algorithm and not having it. When runing the OLS regression, we are estimating the average treatment effect for that group, which is known as the "average treatment effect on the treated. 
+
+### DiD Model
+
+One simple regression approach involves comparing outcomes in a single group before and after a policy intervention. The one-group before-and-after design assumes the group remains comparable over time, which is necessary for identifying the effect of the new algorithm in the total revenue of Amazon. However, the assumption that the group remains comparable over time, might not be realistic. A Dif-in-Diff model, introduces a comparison group, which is not affected by the policy and for which data are available in both periods. In order to isolate the effect on sales of implementing a new algorithm in the cities where it was implemented, eliminating any other time varing effect.
+
+### Average Total Efect on the Treated
+
+In a DiD model, we can obtain a parameter that allows to understand how the new algorithm affects the sales in the states who actually had it, this is the Total average effect on the treated. This will allow us to make informed decisions about implementing, modifying, or disregarding the algorithm. A positive and significant ATET, will imply that the new alexa algorithm, significantly increased Amazon´s revenue in those cities. 
+
+It is essential to understand, if the effect on sales outweights the cost of implementing it. Therefore, focusing on the ATET provides more actionable and specific information for practical decision-making. The Average Treatment Effect (ATE) would be pertinent if the treatment was universally applicable, implying that it's reasonable to contemplate the potential benefits of treatment for any randomly selected individual from the population.
+
+### Assumptions
+
+Following @cameron2005microeconometrics the interpretation of the DiD model rely on the following assumptions:
+
+- The untreated group would not suddenly change around the time of treatment.
+- The treated and untreated groups are generally similar in many ways.
+- The treated and untreated groups had similar trajectories for the dependent variable before the treatment.
+- Individuals from states that do not have the algorithm, do not benefit indirectly from the algorithm.
+
+The validity of DID estimates relies on this assumption holding true. Otherwise, the estimator is biased and the relaionship would not be "pure".
+
+### Regression 
+
+\[ Sales_{it}^j = \beta_0 + \beta_1 D_t + \beta_2 D_j + \beta_3 D_j*D_t + \epsilon_{it}^j, \quad i = 1, \ldots, N, \quad t = 0, 1, \]
+
+where:
+\( j \) indicates the group, j= {T, NT}
+
+\( D_j = 1 \) if \( j = Treated \) and \( D_j = 0 \) otherwise
+
+\( D_{t} = 1 \) if post treated and \( D_{t} = 0 \) if t=0 (Pre-treatment)
+
+\( \epsilon \) is a zero-mean constant-variance error term.
+
+Here, \beta_3 will measure the ATET. It is to say, the effect of the new algorithm of Alexa on Amazon´s revenue!
+
+### Testing the Parallel trends
+
+To assess the parallel trends assumption, two simple approaches can be undertaken: examination of prior trends and a placebo test. Failure in these tests reduce the credibility of the parallel trends assumption and hence the validity of our model. @effect
+
+### Granger Causality Test
+
+The Granger-style test helps assess the credibility of the parallel trends assumption in DiD analysis by examining whether treatment effects are observed before the treatment period. It will help us detect the existance of spurious correlation or if our treatment is actually having effects on sales.
+
+### Short Term vs Long Term
+
+So far, we have been operating under the assumption that we only had two distinct time periods: "before treatment" and "after treatment". 
+If there is interest in understanding the effect of a specific treatment over time (the effect of the algorithm in a longer term perspective), we should addapt the difference-in-differences model to examine multiple "after" periods. 
+
+A possible way involves creating a centered time variable, where time is measured relative to the treatment period. By interacting the treatment variable with a set of binary (1 and 0) indicator variables for each time period, we can analyze how the treatment effect varies over time.
+
+### Drawbacks
+
+Tthe DID estimator relies on specific assumptions, and if these assumptions do not hold, it can lead to incorrect conclusions. 
+
+Possible issues that can arise include:
+
+- **Ashenfelter's dip**: This occurs when the outcome variable for the treatment group change before the treatment is implemented. This can create the false impression that the treatment had a positive effect, when in fact it was just random fluctuation.
+  
+- **Differential trends**: This happens when the treatment and control groups experience different overall trends over time. This discrepancy can complicate efforts to isolate the treatment effect. It is the case when trends are not parallel.
+  
+- **Specific inside group changes**: This occurs when the the treatment and control groups changes over time. For example, if something exogenous (and not controlled) happens in treatment group, it can falsely appear that the new algorithm had a positive effect, when the improvement was actually due to an external change. An example could be, a change in taxes for one of the states.
+
+### Treatment Separability 
+
+The stable unit treatment value assumption (SUTVA) ensures that there are no spillover effects from the treatment to untreated observations. In this case, that there are no effects of having a new algorithm in certain states, over the states that do not have it. The treatment separability guarantees that the treatment effect is only affecting  the treated states and does not indirectly affect untreated observations. @song2019better
+
+## Main Results
+
+### The R code
+
+(Interaction Effect): This coefficient reflects the difference in the treatment effect between the treated and control groups. A positive value of approximately 5.90 suggests that the treatment effect is stronger for the treated group compared to the control group. The standard error is 1.79, and the p-value is 0.001, indicating statistical significance.
+
+```{r echo=FALSE, include=FALSE}
+#### libraries ####
+library(tidyverse)
+library(modelsummary)
+library(fixest)
+library(readr)
+library(DT)
+library(ggplot2)
+library(broom)
+library(skimr)
+library(zoo)
+library(dplyr)
+```
+
+#### Data Loading and Preparation
+
+Given the absence of I real dataset, I will adapt a database from Amazon sales in order to count with data to work with. This dataset was downloaded form Kaggel and in the following lines, it will be adapted.
+
+The following code includes a section where it generates dummies for the years that are pre and post treatment and dummies for treated or not treated cities. It deals with outliers using the interquartile range on sales and generates a treatment effect multyplying the sales of the treatment group.
+
+
+```{r include=FALSE}
+# Load dataset :
+df <- read_csv("C:/Users/ampar/OneDrive/Documents/Amazon/alexa.csv")
+
+# Convert 'Order Date' and 'Ship Date' to date format
+df$"Order Date" <- as.Date(df$"Order Date", format="%m/%d/%Y")
+df$"Ship Date" <- as.Date(df$"Ship Date", format="%m/%d/%Y")
+
+# convert every character into factor
+df <- df %>%
+  mutate_if(is.character, as.factor)
+
+# show the data
+datatable(head(df,20), options = list(scrollY = '600px'), fillContainer = TRUE)
+
+# My manipulated dataset has the  columns: Customer ID, State, Expenditure, date,etc
+
+# Define treated cities
+treated_states<- c("Florida", "California", "Texas", "Nebraska" ) #Assume these are cities
+
+# Define treatment date
+treatment_date <- as.Date("2016-09-01")  # imagine it was in 2017 bc my data
+
+# if desired , we could Filter Sales to only be smaller than $300
+#Df <- df %>% filter(Sales < 300)
+
+# Calculate the mode of the Sales column
+calculate_mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+mode_sales <- calculate_mode(df$Sales)
+
+# Calculate the IQR for the Sales column
+Q1_sales <- quantile(df$Sales, 0.25, na.rm = TRUE)
+Q3_sales <- quantile(df$Sales, 0.75, na.rm = TRUE)
+IQR_sales <- Q3_sales - Q1_sales
+
+# Define lower and upper bounds based on the mode and 1.5 * IQR
+lower_bound_mode <- mode_sales - 1.5 * IQR_sales
+upper_bound_mode <- mode_sales + 1.5 * IQR_sales
+
+# Filter Sales values within 1.5 * IQR distance from the mode
+df <- df %>%
+  filter(Sales >= lower_bound_mode & Sales <= upper_bound_mode)
+
+#Create D_j and D_t dummies
+df <- df %>%
+  mutate(
+    D_j = ifelse(State %in% treated_states, 1, 0),  # Treated state indicator
+   D_t = ifelse(`Order Date` > treatment_date , 1, 0)  # Post-treatment period indicator
+  )
+
+
+# convert into factor
+df$D_j <- as.factor(df$D_j)
+df$D_t <- as.factor(df$D_t)
+
+# Add a new column 'Adjusted_Sales' that multiplies Sales by a random number between 0.00 and 0.65 + 1
+
+set.seed(123) # Set seed
+
+df <- df %>%
+  mutate(Adjusted_Sales = ifelse(State %in% treated_states & `Order Date` > treatment_date,Sales * (runif(n(), min = 0.30, max = 0.40) + 1), Sales))
+
+# Calculate the first and third quartiles and the interquartile range for 'Adjusted_Sales' in pre-treatment data
+Q1 <- quantile(df$Adjusted_Sales, 0.25, na.rm = TRUE)
+Q3 <- quantile(df$Adjusted_Sales, 0.75, na.rm = TRUE)
+IQR <- Q3 - Q1
+
+
+# Define lower and upper bounds for outliers
+lower_bound <- Q1 - 0.5 * IQR
+upper_bound <- Q3 + 0.5 * IQR
+
+# Filter out the outliers from the entire dataset based on pre-treatment bounds
+df_filtered <- df %>%
+  filter(Adjusted_Sales >= lower_bound & Adjusted_Sales <= upper_bound)
+
+# show the data again - if you want to, eliminate de #
+# datatable(head(df,20), options = list(scrollY = '600px'), fillContainer = TRUE)
+```
+
+
+#### Exploratory Analysis
+
+Before estimating the model, it is always recomended to explore the data. Plotting the sales distribution and some statistical summary will be usefull to have a prior idea of how the dataset is distributed, assesing if it is normally distributed or if transformations are necessary.
+
+Kindly note that if the data is transformed, some interpretations of the estimations may vary.
+In order to asses the parallel trends assumption, this section includes a plot of the observed sales for treated and for not treated states. This allows to visually inspect whether the pre-treatment dynamics of the treatment group were similar to those from the control group units.
+
+```{r echo=FALSE}
+# statistical summary
+skim(df)
+```
+#### Density of Sales
+
+```{r echo=FALSE}
+# histogram with density of sales
+ggplot(df, aes(x=Adjusted_Sales)) +
+  geom_histogram(aes(y=..density..), binwidth=10, fill="grey", alpha=0.7) +
+  geom_density(alpha=.2, fill="grey") +
+  labs(title="Density of Sales", x="Sales", y="Density")
+```
+
+#### *Treated vs Not Treated States*
+
+In this section, we can observe that the sales for both groups follow a similar distribution.
+
+```{r echo=FALSE}
+# Filter dates
+start_date <- as.Date(paste0(2014, "-01-01"))
+end_date <- as.Date(paste0(2018, "-12-31"))
+# df for treated
+df_t <- df %>% 
+  filter(`Order Date` >= start_date & `Order Date` <= end_date & State %in% treated_states)
+# df for non-treated cities
+df_nt <- df %>% 
+  filter(`Order Date` >= start_date & `Order Date` <= end_date & !(State %in% treated_states))
+```
+##### Distribution
+
+```{r echo=FALSE}
+# histogram with density of sales
+ggplot(df_t, aes(x=Adjusted_Sales)) +
+  geom_histogram(aes(y=..density..), binwidth=10, fill="grey", alpha=0.7) +
+  geom_density(alpha=.2, fill="#FFBBBB") +
+  labs(title="Density of T Sales", x="Sales", y="Density")
+# histogram with density of sales
+ggplot(df_nt, aes(x=Adjusted_Sales)) +
+  geom_histogram(aes(y=..density..), binwidth=10, fill="grey", alpha=0.7) +
+  geom_density(alpha=.2, fill="#BBBBFF") +
+  labs(title="Density of NT Sales", x="Sales", y="Density")
+
+```
+
+
+#### **Average Sales per month**
+
+The following plot enables us to assess the trend of sales in each of the groups. It's crucial to note the similarity in behavior prior to the change in the Alexa algorithm. This preliminary observation suggests that both treated and non-treated groups exhibit comparable trends, supporting the belief that the parallel trend assumption holds 
+
+By examining the plotted time series of average monthly sales for each group, we can clearly observe a shift in the coefficient (average sales) for the group that received the treatment. Around the cutoff date, the graphs diverge, with the treated group's average sales moving upward. Despite this, both groups still appear to co-move, supporting the parallel trends assumption.
+
+
+```{r echo=FALSE}
+
+# Calculate average sales per month for treated cities
+avg_t <- df_t %>%
+  group_by(month = format(`Order Date`, "%Y-%m")) %>%
+  summarise(avg_sales = mean(Adjusted_Sales, na.rm = TRUE))
+
+# Convert month to date format for treated cities
+avg_t$month <- as.Date(paste0(avg_t$month, "-01"))
+
+# Calculate average sales per month for non-treated cities
+avg_nt <- df_nt %>%
+  group_by(month = format(`Order Date`, "%Y-%m")) %>%
+  summarise(avg_sales = mean(Adjusted_Sales, na.rm = TRUE))
+
+# Convert month to date format for non-treated cities
+avg_nt$month <- as.Date(paste0(avg_nt$month, "-01"))
+
+# Plot the time series with average sales for treated and non-treated cities
+ggplot() +
+  geom_line(data = avg_t, aes(x = month, y = avg_sales, color = "Treated")) +
+  geom_line(data = avg_nt, aes(x = month, y = avg_sales, color = "Non-Treated")) +
+  labs(x = "Order Date", y = "Average Adjusted Sales", title = "Monthly Average Adjusted Sales") +
+  scale_color_manual(values = c("Treated" = "#FF5555", "Non-Treated" = "#5555FF")) +
+  theme_minimal()
+
+```
+
+
+#### ATET Estimation
+
+In this section, the linear regression model is estimated. We can analize the significance of each of the estimated coefficients. To evaluate the statistical significance of the included variables, hypothesis testing will be performed. The rejection value is α = .01. For any p-value smaller than that, we can conclude that the estimate for the coefficient has a 1% chance or less of being equal to zero, which allows to reject the null hypothesis of it being zero, and hence, insignificant.
+
+To analize the effect we look at the interaction term between the dummies \(D_j\)\(*\)\(D_t\). We should observe that it is coherent with the synthetic effect that we have simulating. Proving that under the correct assumptions the Diff-in-Diff method can retrieve the effect of a treatment. Kindly note, that given the fake data and the fact that the regression is ommiting some relevant variables.
+
+```{r echo=FALSE}
+# Run DiD regression model
+DiD_model <- lm(Adjusted_Sales ~ D_t + D_j + D_j * D_t, data = df_filtered)
+
+# Summarize the model
+model_summary <- tidy(DiD_model)
+
+# Display the results in a datatable
+datatable(model_summary, fillContainer = TRUE)
+```
+
+### References
